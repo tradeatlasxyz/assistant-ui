@@ -1,5 +1,17 @@
 # @assistant-ui/react-langgraph
 
+## 0.13.3
+
+### Patch Changes
+
+- cbdc786: fix(react-langgraph): stabilize tool args serialization to avoid argsText rewrites
+- 5232826: fix(react-langgraph): treat stream cancellation `AbortError` as a normal exit condition in `useLangGraphMessages` to avoid unhandled promise rejections when runs are cancelled.
+- 1eb059c: fix(react-langgraph): preserve tuple-stream accumulated messages by skipping updates snapshot replacement after tuple message events.
+- Updated dependencies [07dcce0]
+- Updated dependencies [bc40eaf]
+- Updated dependencies [1eb059c]
+  - @assistant-ui/react@0.12.15
+
 ## 0.13.2
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @assistant-ui/react-ag-ui
 
+## 0.0.19
+
+### Patch Changes
+
+- c482ca2: fix(react-ag-ui): correctly import `MESSAGES_SNAPSHOT` events that include `role: "tool"` messages by normalizing them into assistant tool-call results before core conversion.
+- Updated dependencies [07dcce0]
+- Updated dependencies [bc40eaf]
+- Updated dependencies [1eb059c]
+  - @assistant-ui/react@0.12.15
+
 ## 0.0.18
 
 ### Patch Changes

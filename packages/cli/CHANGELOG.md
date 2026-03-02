@@ -1,5 +1,12 @@
 # assistant-ui
 
+## 0.0.81
+
+### Patch Changes
+
+- de45e19: fix(create): point the `cloud` template to the valid
+  `assistant-ui-starter-cloud` repository in both CLIs and aligned tests.
+
 ## 0.0.80
 
 ### Patch Changes
