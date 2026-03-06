@@ -1,0 +1,10 @@
+.thread-message--focused {
+  outline: 2px solid var(--focus-ring-color, #2563eb);
+  outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .thread-message--focused {
+    outline-color: var(--focus-ring-color-dark, #60a5fa);
+  }
+}
