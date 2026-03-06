@@ -13,6 +13,7 @@ import { useSizeHandle } from "../../utils/hooks/useSizeHandle";
 import { useComposedRefs } from "@radix-ui/react-compose-refs";
 import { useThreadViewport } from "../../context/react/ThreadViewportContext";
 import { ThreadPrimitiveViewportSlack } from "../thread/ThreadViewportSlack";
+import { useThreadKeyboardNavigationContext } from "../thread/useThreadKeyboardNavigation";
 
 const useIsHoveringRef = () => {
   const aui = useAui();
@@ -108,7 +109,7 @@ export namespace MessagePrimitiveRoot {
 export const MessagePrimitiveRoot = forwardRef<
   MessagePrimitiveRoot.Element,
   MessagePrimitiveRoot.Props
->((props, forwardRef) => {
+>(({ onFocus, ...props }, forwardRef) => {
   const isHoveringRef = useIsHoveringRef();
   const anchorUserMessageRef = useMessageViewportRef();
   const ref = useComposedRefs<HTMLDivElement>(
@@ -117,10 +118,33 @@ export const MessagePrimitiveRoot = forwardRef<
     anchorUserMessageRef,
   );
   const messageId = useAuiState((s) => s.message.id);
+  const messageIndex = useAuiState((s) => s.message.index);
+  const threadKeyboardNavigation = useThreadKeyboardNavigationContext({
+    optional: true,
+  });
+
+  const isActiveMessage =
+    threadKeyboardNavigation?.activeMessageId === messageId || false;
+  const messageOptionId = threadKeyboardNavigation?.getMessageOptionId(messageId);
 
   return (
     <ThreadPrimitiveViewportSlack>
-      <Primitive.div {...props} ref={ref} data-message-id={messageId} />
+      <Primitive.div
+        {...props}
+        ref={ref}
+        id={messageOptionId}
+        role={threadKeyboardNavigation ? "option" : props.role}
+        tabIndex={threadKeyboardNavigation ? (isActiveMessage ? 0 : -1) : props.tabIndex}
+        aria-selected={
+          threadKeyboardNavigation ? isActiveMessage : props["aria-selected"]
+        }
+        data-message-id={messageId}
+        data-thread-message-index={messageIndex}
+        onFocus={(event) => {
+          threadKeyboardNavigation?.onMessageFocus(messageId);
+          onFocus?.(event);
+        }}
+      />
     </ThreadPrimitiveViewportSlack>
   );
 });
