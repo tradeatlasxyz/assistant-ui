@@ -108,19 +108,27 @@ export namespace MessagePrimitiveRoot {
 export const MessagePrimitiveRoot = forwardRef<
   MessagePrimitiveRoot.Element,
   MessagePrimitiveRoot.Props
->((props, forwardRef) => {
+>((props, forwardedRef) => {
   const isHoveringRef = useIsHoveringRef();
   const anchorUserMessageRef = useMessageViewportRef();
   const ref = useComposedRefs<HTMLDivElement>(
-    forwardRef,
+    forwardedRef,
     isHoveringRef,
     anchorUserMessageRef,
   );
   const messageId = useAuiState((s) => s.message.id);
+  const messageIndex = useAuiState((s) => s.message.index);
 
   return (
     <ThreadPrimitiveViewportSlack>
-      <Primitive.div {...props} ref={ref} data-message-id={messageId} />
+      <Primitive.div
+        {...props}
+        ref={ref}
+        id={props.id ?? `thread-msg-${messageIndex}`}
+        data-message-id={messageId}
+        tabIndex={props.tabIndex ?? -1}
+        role={"option"}
+      />
     </ThreadPrimitiveViewportSlack>
   );
 });

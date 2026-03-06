@@ -12,6 +12,8 @@ import { useThreadViewportAutoScroll } from "./useThreadViewportAutoScroll";
 import { ThreadPrimitiveViewportProvider } from "../../context/providers/ThreadViewportProvider";
 import { useSizeHandle } from "../../utils/hooks/useSizeHandle";
 import { useThreadViewport } from "../../context/react/ThreadViewportContext";
+import { useAuiState } from "@assistant-ui/store";
+import { useThreadKeyboardNavigation } from "./useThreadKeyboardNavigation";
 
 export namespace ThreadPrimitiveViewport {
   export type Element = ComponentRef<typeof Primitive.div>;
@@ -75,17 +77,42 @@ const ThreadPrimitiveViewportScrollable = forwardRef<
     },
     forwardedRef,
   ) => {
+    const messagesLength = useAuiState((s) => s.thread.messages.length);
+    const nav = useThreadKeyboardNavigation({ messageCount: messagesLength });
+
     const autoScrollRef = useThreadViewportAutoScroll<HTMLDivElement>({
       autoScroll,
       scrollToBottomOnRunStart,
       scrollToBottomOnInitialize,
       scrollToBottomOnThreadSwitch,
+      focusedId: nav.getActiveId(),
+      focusBlock: "nearest",
     });
     const viewportSizeRef = useViewportSizeRef();
     const ref = useComposedRefs(forwardedRef, autoScrollRef, viewportSizeRef);
 
     return (
-      <Primitive.div {...rest} ref={ref}>
+      <Primitive.div
+        {...rest}
+        ref={ref}
+        role={"listbox"}
+        tabIndex={0}
+        aria-label={rest["aria-label"] ?? "Thread messages"}
+        aria-activedescendant={nav.getActiveId() ?? undefined}
+        onFocus={nav.onContainerFocus}
+        onKeyDown={(e) => nav.keyDownHandler(e)}
+      >
+        <span
+          style={{
+            position: "absolute",
+            width: 1,
+            height: 1,
+            overflow: "hidden",
+            clip: "rect(1px, 1px, 1px, 1px)",
+            whiteSpace: "nowrap",
+          }}
+          aria-live="polite"
+        >{`Message ${nav.currentIndex + 1} of ${messagesLength}`}</span>
         {children}
       </Primitive.div>
     );
