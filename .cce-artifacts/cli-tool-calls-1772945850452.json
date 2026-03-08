@@ -1,0 +1,117 @@
+{
+  "producer": "cce-cli-stderr-parser",
+  "tool_calls": [
+    {
+      "tool_name": "glob",
+      "arguments": {},
+      "result": null,
+      "error": null,
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "glob",
+      "arguments": {},
+      "result": null,
+      "error": null,
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "read_file",
+      "arguments": {},
+      "result": null,
+      "error": null,
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "ls",
+      "arguments": {},
+      "result": null,
+      "error": null,
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "read_file",
+      "arguments": {},
+      "result": null,
+      "error": null,
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "glob",
+      "arguments": {},
+      "result": null,
+      "error": null,
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "glob",
+      "arguments": {},
+      "result": null,
+      "error": null,
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "read_file",
+      "arguments": {},
+      "result": null,
+      "error": null,
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "read_file",
+      "arguments": {},
+      "result": null,
+      "error": null,
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "write_file",
+      "arguments": {},
+      "result": null,
+      "error": null,
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "write_file",
+      "arguments": {},
+      "result": null,
+      "error": null,
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "edit_file",
+      "arguments": {},
+      "result": null,
+      "error": null,
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "edit_file",
+      "arguments": {},
+      "result": null,
+      "error": null,
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "execute",
+      "arguments": {},
+      "result": null,
+      "error": null,
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "read_file",
+      "arguments": {},
+      "result": null,
+      "error": null,
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "execute",
+      "arguments": {},
+      "result": null,
+      "error": null,
+      "duration_seconds": 0.0
+    }
+  ]
+}
