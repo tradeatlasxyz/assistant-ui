@@ -57,6 +57,18 @@ export type ThreadViewportState = {
     callback: ({ behavior }: { behavior: ScrollBehavior }) => void,
   ) => Unsubscribe;
 
+  /** Store current scrollTop for a thread id */
+  readonly setThreadScrollPosition: (
+    threadId: string,
+    scrollTop: number,
+  ) => void;
+
+  /** Read previously stored scrollTop for a thread id */
+  readonly getThreadScrollPosition: (threadId: string) => number | undefined;
+
+  /** Clear stored scrollTop for a thread id */
+  readonly clearThreadScrollPosition: (threadId: string) => void;
+
   /** Controls scroll anchoring: "top" anchors user messages at top, "bottom" is classic behavior */
   readonly turnAnchor: "top" | "bottom";
 
@@ -90,6 +102,7 @@ export const makeThreadViewportStore = (
   const scrollToBottomListeners = new Set<
     (config: { behavior: ScrollBehavior }) => void
   >();
+  const threadScrollPositions = new Map<string, number>();
 
   const viewportRegistry = createSizeRegistry((total) => {
     store.setState({
@@ -128,6 +141,15 @@ export const makeThreadViewportStore = (
       return () => {
         scrollToBottomListeners.delete(callback);
       };
+    },
+    setThreadScrollPosition: (threadId, scrollTop) => {
+      threadScrollPositions.set(threadId, scrollTop);
+    },
+    getThreadScrollPosition: (threadId) => {
+      return threadScrollPositions.get(threadId);
+    },
+    clearThreadScrollPosition: (threadId) => {
+      threadScrollPositions.delete(threadId);
     },
 
     turnAnchor: options.turnAnchor ?? "bottom",
