@@ -1,7 +1,16 @@
 import type { ThreadMessage as ThreadMessageType } from "../../../types";
-import { type ComponentType, type FC, memo, useMemo } from "react";
+import {
+  type ComponentType,
+  type FC,
+  memo,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 import { useAuiState } from "@assistant-ui/store";
 import { MessageByIndexProvider } from "../../providers";
+
+import { getNextFocusedIndex } from "./getNextFocusedIndex";
 
 export namespace ThreadPrimitiveMessages {
   export type Props = {
@@ -198,20 +207,56 @@ ThreadPrimitiveMessageByIndex.displayName = "ThreadPrimitive.MessageByIndex";
 export const ThreadPrimitiveMessagesImpl: FC<ThreadPrimitiveMessages.Props> = ({
   components,
 }) => {
-  const messagesLength = useAuiState((s) => s.thread.messages.length);
+  const messagesLength = useAuiState((s) => s.thread.messages.length ?? 0);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      const nextIndex = getNextFocusedIndex({
+        key: e.key,
+        current: focusedIndex,
+        length: messagesLength,
+        pageSize: 5,
+      });
+
+      if (nextIndex === null) return;
+
+      e.preventDefault();
+      setFocusedIndex(nextIndex);
+
+      queueMicrotask(() => {
+        const el = document.getElementById(`aui-message-${nextIndex}`);
+        el?.focus();
+        el?.scrollIntoView?.({ block: "nearest" });
+      });
+    },
+    [focusedIndex, messagesLength],
+  );
 
   const messageElements = useMemo(() => {
     if (messagesLength === 0) return null;
-    return Array.from({ length: messagesLength }, (_, index) => (
-      <ThreadPrimitiveMessageByIndex
-        key={index}
-        index={index}
-        components={components}
-      />
-    ));
-  }, [messagesLength, components]);
+    return Array.from({ length: messagesLength }, (_, index) => {
+      return (
+        <div
+          key={index}
+          id={`aui-message-${index}`}
+          tabIndex={focusedIndex === index ? 0 : -1}
+          data-aui-message-index={index}
+        >
+          <ThreadPrimitiveMessageByIndex
+            index={index}
+            components={components}
+          />
+        </div>
+      );
+    });
+  }, [messagesLength, components, focusedIndex]);
 
-  return messageElements;
+  return (
+    <div role="listbox" tabIndex={0} onKeyDown={onKeyDown}>
+      {messageElements}
+    </div>
+  );
 };
 
 ThreadPrimitiveMessagesImpl.displayName = "ThreadPrimitive.Messages";
