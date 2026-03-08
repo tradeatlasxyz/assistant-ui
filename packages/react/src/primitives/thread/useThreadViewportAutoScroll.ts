@@ -2,7 +2,7 @@
 
 import { useComposedRefs } from "@radix-ui/react-compose-refs";
 import { useCallback, useRef, type RefCallback } from "react";
-import { useAuiEvent } from "@assistant-ui/store";
+import { useAuiEvent, useAuiState } from "@assistant-ui/store";
 import { useOnResizeContent } from "../../utils/hooks/useOnResizeContent";
 import { useOnScrollToBottom } from "../../utils/hooks/useOnScrollToBottom";
 import { useManagedRef } from "../../utils/hooks/useManagedRef";
@@ -39,16 +39,50 @@ export namespace useThreadViewportAutoScroll {
      * Defaults to true.
      */
     scrollToBottomOnThreadSwitch?: boolean | undefined;
+
+    /**
+     * Whether to preserve and restore scrollTop when switching threads.
+     *
+     * Defaults to false.
+     */
+    preserveScrollOnThreadSwitch?: boolean | undefined;
   };
 }
+
+type ThreadSwitchScrollAction =
+  | { type: "restore"; scrollTop: number }
+  | { type: "scrollToBottom" }
+  | { type: "none" };
+
+export const getThreadSwitchScrollAction = ({
+  preserveScrollOnThreadSwitch,
+  savedScrollTop,
+  scrollToBottomOnThreadSwitch,
+}: {
+  preserveScrollOnThreadSwitch: boolean;
+  savedScrollTop: number | undefined;
+  scrollToBottomOnThreadSwitch: boolean;
+}): ThreadSwitchScrollAction => {
+  if (preserveScrollOnThreadSwitch && savedScrollTop !== undefined) {
+    return { type: "restore", scrollTop: savedScrollTop };
+  }
+
+  if (scrollToBottomOnThreadSwitch) {
+    return { type: "scrollToBottom" };
+  }
+
+  return { type: "none" };
+};
 
 export const useThreadViewportAutoScroll = <TElement extends HTMLElement>({
   autoScroll,
   scrollToBottomOnRunStart = true,
   scrollToBottomOnInitialize = true,
   scrollToBottomOnThreadSwitch = true,
+  preserveScrollOnThreadSwitch = false,
 }: useThreadViewportAutoScroll.Options): RefCallback<TElement> => {
   const divRef = useRef<TElement>(null);
+  const threadId = useAuiState((s) => s.threadListItem.id);
 
   const threadViewportStore = useThreadViewportStore();
   if (autoScroll === undefined) {
@@ -96,6 +130,12 @@ export const useThreadViewportAutoScroll = <TElement extends HTMLElement>({
       }
     }
 
+    if (preserveScrollOnThreadSwitch && threadId) {
+      threadViewportStore
+        .getState()
+        .setThreadScrollPosition(threadId, div.scrollTop);
+    }
+
     lastScrollTop.current = div.scrollTop;
   };
 
@@ -139,14 +179,51 @@ export const useThreadViewportAutoScroll = <TElement extends HTMLElement>({
     });
   });
 
-  // scroll to bottom instantly when switching threads
-  useAuiEvent("threadListItem.switchedTo", () => {
-    if (!scrollToBottomOnThreadSwitch) return;
-    scrollingToBottomBehaviorRef.current = "instant";
-    requestAnimationFrame(() => {
-      scrollToBottom("instant");
-    });
-  });
+  useAuiEvent(
+    "threadListItem.switchedAway",
+    ({ threadId: switchedFromThreadId }) => {
+      if (!preserveScrollOnThreadSwitch) return;
+      const div = divRef.current;
+      if (!div) return;
+      threadViewportStore
+        .getState()
+        .setThreadScrollPosition(switchedFromThreadId, div.scrollTop);
+    },
+  );
+
+  // preserve/restore on thread switch with fallback to default behavior
+  useAuiEvent(
+    "threadListItem.switchedTo",
+    ({ threadId: switchedToThreadId }) => {
+      const savedScrollTop = threadViewportStore
+        .getState()
+        .getThreadScrollPosition(switchedToThreadId);
+      const action = getThreadSwitchScrollAction({
+        preserveScrollOnThreadSwitch,
+        savedScrollTop,
+        scrollToBottomOnThreadSwitch,
+      });
+
+      if (action.type === "none") return;
+      if (action.type === "scrollToBottom") {
+        scrollingToBottomBehaviorRef.current = "instant";
+        requestAnimationFrame(() => {
+          scrollToBottom("instant");
+        });
+        return;
+      }
+
+      scrollingToBottomBehaviorRef.current = null;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const div = divRef.current;
+          if (!div) return;
+          div.scrollTop = action.scrollTop;
+          handleScroll();
+        });
+      });
+    },
+  );
 
   const autoScrollRef = useComposedRefs<TElement>(resizeRef, scrollRef, divRef);
   return autoScrollRef as RefCallback<TElement>;

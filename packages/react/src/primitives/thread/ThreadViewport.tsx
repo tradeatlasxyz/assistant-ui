@@ -51,6 +51,13 @@ export namespace ThreadPrimitiveViewport {
      * Defaults to true.
      */
     scrollToBottomOnThreadSwitch?: boolean | undefined;
+
+    /**
+     * Whether to preserve and restore scroll position when switching threads.
+     *
+     * Defaults to false.
+     */
+    preserveScrollOnThreadSwitch?: boolean | undefined;
   };
 }
 
@@ -70,6 +77,7 @@ const ThreadPrimitiveViewportScrollable = forwardRef<
       scrollToBottomOnRunStart,
       scrollToBottomOnInitialize,
       scrollToBottomOnThreadSwitch,
+      preserveScrollOnThreadSwitch,
       children,
       ...rest
     },
@@ -80,6 +88,7 @@ const ThreadPrimitiveViewportScrollable = forwardRef<
       scrollToBottomOnRunStart,
       scrollToBottomOnInitialize,
       scrollToBottomOnThreadSwitch,
+      preserveScrollOnThreadSwitch,
     });
     const viewportSizeRef = useViewportSizeRef();
     const ref = useComposedRefs(forwardedRef, autoScrollRef, viewportSizeRef);
