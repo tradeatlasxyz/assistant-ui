@@ -50,6 +50,27 @@ const createSizeRegistry = (
 
 export type ThreadViewportState = {
   readonly isAtBottom: boolean;
+
+  readonly setSavedScrollTop: (threadId: string, scrollTop: number) => void;
+  readonly getSavedScrollTop: (threadId: string) => number | undefined;
+  readonly clearSavedScrollTop: (threadId: string) => void;
+
+  readonly setPendingRestoreScrollTop: (
+    threadId: string,
+    scrollTop: number,
+  ) => void;
+  readonly getPendingRestoreScrollTop: (threadId: string) => number | undefined;
+  readonly consumePendingRestoreScrollTop: (
+    threadId: string,
+  ) => number | undefined;
+
+  readonly markRestoreConsumedByJump: (
+    threadId: string,
+    consumed: boolean,
+  ) => void;
+  readonly isRestoreConsumedByJump: (threadId: string) => boolean;
+
+  readonly scrollMemoryVersion: number;
   readonly scrollToBottom: (config?: {
     behavior?: ScrollBehavior | undefined;
   }) => void;
@@ -90,6 +111,9 @@ export const makeThreadViewportStore = (
   const scrollToBottomListeners = new Set<
     (config: { behavior: ScrollBehavior }) => void
   >();
+  const savedScrollTopByThreadId = new Map<string, number>();
+  const pendingRestoreScrollTopByThreadId = new Map<string, number>();
+  const restoreConsumedByJumpThreadIds = new Set<string>();
 
   const viewportRegistry = createSizeRegistry((total) => {
     store.setState({
@@ -116,8 +140,49 @@ export const makeThreadViewportStore = (
     });
   });
 
-  const store = create<ThreadViewportState>(() => ({
+  const store = create<ThreadViewportState>((set) => ({
     isAtBottom: true,
+
+    setSavedScrollTop: (threadId, scrollTop) => {
+      savedScrollTopByThreadId.set(threadId, scrollTop);
+      set((state) => ({ scrollMemoryVersion: state.scrollMemoryVersion + 1 }));
+    },
+    getSavedScrollTop: (threadId) => savedScrollTopByThreadId.get(threadId),
+    clearSavedScrollTop: (threadId) => {
+      if (!savedScrollTopByThreadId.delete(threadId)) return;
+      set((state) => ({ scrollMemoryVersion: state.scrollMemoryVersion + 1 }));
+    },
+
+    setPendingRestoreScrollTop: (threadId, scrollTop) => {
+      pendingRestoreScrollTopByThreadId.set(threadId, scrollTop);
+      set((state) => ({ scrollMemoryVersion: state.scrollMemoryVersion + 1 }));
+    },
+    getPendingRestoreScrollTop: (threadId) =>
+      pendingRestoreScrollTopByThreadId.get(threadId),
+    consumePendingRestoreScrollTop: (threadId) => {
+      const value = pendingRestoreScrollTopByThreadId.get(threadId);
+      if (value === undefined) return undefined;
+      pendingRestoreScrollTopByThreadId.delete(threadId);
+      set((state) => ({ scrollMemoryVersion: state.scrollMemoryVersion + 1 }));
+      return value;
+    },
+
+    markRestoreConsumedByJump: (threadId, consumed) => {
+      const hadValue = restoreConsumedByJumpThreadIds.has(threadId);
+      if (consumed) {
+        if (hadValue) return;
+        restoreConsumedByJumpThreadIds.add(threadId);
+      } else {
+        if (!hadValue) return;
+        restoreConsumedByJumpThreadIds.delete(threadId);
+      }
+      set((state) => ({ scrollMemoryVersion: state.scrollMemoryVersion + 1 }));
+    },
+    isRestoreConsumedByJump: (threadId) =>
+      restoreConsumedByJumpThreadIds.has(threadId),
+
+    scrollMemoryVersion: 0,
+
     scrollToBottom: ({ behavior = "auto" } = {}) => {
       for (const listener of scrollToBottomListeners) {
         listener({ behavior });
